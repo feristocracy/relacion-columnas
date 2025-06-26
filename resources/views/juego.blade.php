@@ -5,20 +5,45 @@
     <meta charset="UTF-8">
     <title>Relacionar Columnas</title>
     @vite('resources/css/app.css')
+    <style>
+        .masonry-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-auto-rows: 1px;
+            grid-row-gap: 1rem;
+            grid-column-gap: 1rem;
+        }
+        .masonry-item {
+            grid-row-end: span var(--rows);
+            height: fit-content;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .masonry-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
-    <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-4xl">
-        <h2 class="text-2xl font-bold text-center mb-6">Relaciona las columnas</h2>
+    <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-7xl">
+        <h1 class="mb-6 flex justify-center items-center">
+            <img src="/images/logo.jpg" alt="logo de la empresa" class="mx-auto">
+        </h1>
+        <h2 class="text-2xl font-bold text-center mb-6">Arrastra la respuesta a la pregunta que le corresponde</h2>
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
             <!-- Preguntas -->
             <div class="col-span-2">
-                <h3 class="font-semibold mb-4 text-center">Preguntas</h3>
-                <div id="preguntas" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <h3 class="font-semibold mb-4 text-center text-xl">Preguntas</h3>
+                <div id="preguntas" class="masonry-grid">
                     @foreach(["¿Qué debe contener el programa anual de adquisiciones, arrendamientos y servicios?", "¿Cuál es su fecha límite de publicación del programa anual?", "¿Qué funciones principales tienen los Comités de Adquisiciones en las dependencias?",  "¿Qué artículo habla sobre las funciones de los comités de adquisiciones?", "¿Quién preside el Comité de Adquisiciones?", "¿Cuál es la función del Comité de Adquisiciones de Hacienda?", "¿Qué artículo habla sobre los criterios que deben guiar el gasto público en contrataciones?",  "¿Qué sucede si una dependencia desea formalizar contratos antes de contar con presupuesto autorizado?",  "¿Qué tipos de procedimientos de contratación reconoce la ley?", "¿En qué artículo se menciona la participación de testigos sociales?", "¿Qué reglas rigen la presentación de proposiciones por los licitantes?", "¿Qué función tiene la Secretaría respecto a los medios de identificación electrónica?" ] as $pregunta)
-                    <div class="p-4 bg-blue-100 rounded-lg font-medium text-center" data-texto-original="{{ $pregunta }}">
+                    <div class="masonry-item p-4 bg-blue-100 rounded-lg font-medium text-center" data-texto-original="{{ $pregunta }}">
                         {{ $pregunta }}
                     </div>
                     @endforeach
@@ -29,8 +54,8 @@
 
             <!-- Respuestas -->
             <div class="col-span-2">
-                <h3 class="font-semibold mb-4 text-center">Respuestas</h3>
-                <div id="respuestas" class="grid grid-cols-1 sm:grid-cols-2 gap-4 min-h-[240px]">
+                <h3 class="font-semibold mb-4 text-center text-xl">Respuestas</h3>
+                <div id="respuestas" class="masonry-grid min-h-[240px] text-center font-semibold">
                     @foreach(collect([
                     "Adquisiciones previstas para el siguiente ejercicio fiscal",
                     "A más tardar el 31 de diciembre del año en curso en la Plataforma. ",
@@ -45,7 +70,7 @@
                     "En formato digital, por medio de la Plataforma, firma electrónica. No pueden modificarse ni retirarse una vez entregadas.",
                     "Opera y certifica los medios de firma electrónica, asegurando su validez legal y su equivalencia con la firma autógrafa. "
                     ])->shuffle() as $respuesta)
-                    <div class="respuesta draggable p-4 bg-green-100 rounded-lg cursor-move" draggable="true">
+                    <div class="masonry-item respuesta draggable p-4 bg-green-100 rounded-lg cursor-move" draggable="true">
                         {{ $respuesta }}
                     </div>
                     @endforeach
@@ -65,6 +90,40 @@
     </form>
 
     <script>
+    // Función para calcular el tamaño de los elementos masonry
+    function resizeAllMasonryItems() {
+        resizeMasonryItems(document.querySelector('#preguntas'));
+        resizeMasonryItems(document.querySelector('#respuestas'));
+    }
+    
+    // Función para calcular el tamaño de los elementos masonry en un contenedor específico
+    function resizeMasonryItems(grid) {
+        if (!grid) return;
+        
+        const rowHeight = parseInt(window.getComputedStyle(grid).getPropertyValue('grid-auto-rows'));
+        const rowGap = parseInt(window.getComputedStyle(grid).getPropertyValue('grid-row-gap'));
+        
+        const items = grid.querySelectorAll('.masonry-item');
+        items.forEach(item => {
+            const contentHeight = item.getBoundingClientRect().height;
+            const rowSpan = Math.ceil((contentHeight + rowGap) / (rowHeight + rowGap));
+            item.style.setProperty('--rows', rowSpan);
+        });
+    }
+
+    // Ejecutar al cargar la página
+    window.addEventListener('load', resizeAllMasonryItems);
+    
+    // Ejecutar al cambiar el tamaño de la ventana
+    window.addEventListener('resize', resizeAllMasonryItems);
+    
+    // Observar cambios en el DOM para recalcular
+    const preguntasObserver = new MutationObserver(() => resizeMasonryItems(document.querySelector('#preguntas')));
+    preguntasObserver.observe(document.getElementById('preguntas'), { childList: true, subtree: true });
+    
+    const respuestasObserver = new MutationObserver(() => resizeMasonryItems(document.querySelector('#respuestas')));
+    respuestasObserver.observe(document.getElementById('respuestas'), { childList: true, subtree: true });
+    
     const relacionesCorrectas = {
         "¿Qué debe contener el programa anual de adquisiciones, arrendamientos y servicios?": "Adquisiciones previstas para el siguiente ejercicio fiscal",
         "¿Cuál es su fecha límite de publicación del programa anual?": "A más tardar el 31 de diciembre del año en curso en la Plataforma. ",
@@ -146,6 +205,9 @@
                 // Reactivar la respuesta original
                 respuestaOriginal.classList.remove('bg-gray-300', 'text-gray-600', 'line-through', 'opacity-50');
                 respuestaOriginal.setAttribute('draggable', true);
+                
+                // Recalcular el tamaño después de quitar respuesta
+                setTimeout(resizeAllMasonryItems, 10);
             };
 
             // Mostrar en la pregunta
@@ -153,6 +215,9 @@
             preg.appendChild(document.createTextNode(preg.dataset.textoOriginal + ' ➜ '));
             preg.appendChild(asignada);
             asignada.appendChild(botonX);
+            
+            // Recalcular el tamaño después de asignar respuesta
+            setTimeout(resizeAllMasonryItems, 10);
         });
     });
 
@@ -179,6 +244,9 @@
         respuestaOriginal.setAttribute('draggable', true);
 
         contenedorRespuestas.appendChild(respuestaOriginal);
+        
+        // Recalcular el tamaño después de devolver respuesta
+        setTimeout(resizeAllMasonryItems, 10);
     });
 
     // FINALIZAR JUEGO

@@ -25,7 +25,7 @@
                         <td class="p-3">{{ $resultado->jugador->nombre }}</td>
                         <td class="p-3">{{ $resultado->jugador->correo }}</td>
                         <td class="p-3">{{ $resultado->created_at->format('d/m/Y h:i A') }}</td>
-                        <td class="p-3">{{ $resultado->total_correctas }}/20</td>
+                        <td class="p-3">{{ $resultado->total_correctas }}/12</td>
                     </tr>
                 @empty
                     <tr>
